@@ -21,11 +21,11 @@ class Product {
     return Product(
       id: json['id'],
       title: json['title'],
-      price: json['price'].toDouble(),
+      price: (json['price'] as num).toDouble(),
       description: json['description'],
       category: json['category'],
       image: json['image'],
-      rating: json['rating']['rate']?.toDouble() ?? 0.0, // Adjust if API returns a nested rating
+      rating: json['rating']?['rate']?.toDouble() ?? 0.0,
     );
   }
 }

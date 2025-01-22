@@ -26,33 +26,25 @@ class ProductProvider with ChangeNotifier {
     }
 
     try {
-      final url = Uri.parse('https://fakestoreapi.com/products?_page=$_page&_limit=$_limit');
+      final url = Uri.parse('https://fakestoreapi.com/products');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
 
         if (isLoadMore) {
-          // Append the new products to the existing list
           _products.addAll(data.map((item) => Product.fromJson(item)).toList());
         } else {
-          // Set the new products list
           _products = data.map((item) => Product.fromJson(item)).toList();
         }
         _page++;
       }
     } catch (e) {
-      // Handle errors
       print('Error fetching products: $e');
     }
 
-    // Set loading states
-    if (isLoadMore) {
-      _isFetchingMore = false;
-    } else {
-      _isLoading = false;
-    }
-
+    _isLoading = false;
+    _isFetchingMore = false;
     notifyListeners();
   }
 
@@ -65,6 +57,36 @@ class ProductProvider with ChangeNotifier {
           .where((product) => product.title.toLowerCase().contains(query.toLowerCase()))
           .toList();
     }
+    notifyListeners();
+  }
+
+  // Apply filters and sorting
+  void applyFilters({
+    String? category,
+    double minPrice = 0.0,
+    double maxPrice = double.infinity,
+    double minRating = 0.0,
+    String sortOption = 'Price',
+  }) {
+    _filteredProducts = _products.where((product) {
+      final matchesCategory = category == null || product.category == category;
+      final matchesPrice = product.price >= minPrice && product.price <= maxPrice;
+      final matchesRating = product.rating >= minRating;
+      return matchesCategory && matchesPrice && matchesRating;
+    }).toList();
+
+    switch (sortOption) {
+      case 'Price':
+        _filteredProducts.sort((a, b) => a.price.compareTo(b.price));
+        break;
+      case 'Popularity':
+        _filteredProducts.sort((a, b) => b.rating.compareTo(a.rating));
+        break;
+      case 'Rating':
+        _filteredProducts.sort((a, b) => b.rating.compareTo(a.rating));
+        break;
+    }
+
     notifyListeners();
   }
 }
