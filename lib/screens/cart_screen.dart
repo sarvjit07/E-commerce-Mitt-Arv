@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/cart_provider.dart';
-import 'checkout_screen.dart';
+import '../screens/checkout_screen.dart';
 
 class CartScreen extends StatelessWidget {
   const CartScreen({Key? key}) : super(key: key);
@@ -11,7 +11,9 @@ class CartScreen extends StatelessWidget {
     final cartProvider = Provider.of<CartProvider>(context);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Cart')),
+      appBar: AppBar(
+        title: const Text('Cart'),
+      ),
       body: cartProvider.cartItems.isEmpty
           ? const Center(child: Text('Your cart is empty'))
           : Column(
@@ -20,14 +22,28 @@ class CartScreen extends StatelessWidget {
                   child: ListView.builder(
                     itemCount: cartProvider.cartItems.length,
                     itemBuilder: (context, index) {
-                      final item = cartProvider.cartItems[index];
+                      final cartItem = cartProvider.cartItems.values.toList()[index];
                       return ListTile(
-                        leading: Image.network(item.image, width: 50, height: 50),
-                        title: Text(item.title),
-                        subtitle: Text('\$${item.price}'),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.remove_circle),
-                          onPressed: () => cartProvider.removeFromCart(item.id),
+                        leading: Image.network(cartItem.product.image, width: 50, height: 50),
+                        title: Text(cartItem.product.title),
+                        subtitle: Text('Price: \$${cartItem.product.price}'),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.remove),
+                              onPressed: () {
+                                cartProvider.decreaseQuantity(cartItem.product);
+                              },
+                            ),
+                            Text('${cartItem.quantity}', style: const TextStyle(fontSize: 16)),
+                            IconButton(
+                              icon: const Icon(Icons.add),
+                              onPressed: () {
+                                cartProvider.increaseQuantity(cartItem.product);
+                              },
+                            ),
+                          ],
                         ),
                       );
                     },
@@ -37,16 +53,23 @@ class CartScreen extends StatelessWidget {
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
                     children: [
-                      Text('Total: \$${cartProvider.totalPrice}', style: const TextStyle(fontSize: 20)),
+                      Text(
+                        'Total: \$${cartProvider.totalPrice.toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                      ),
                       const SizedBox(height: 10),
                       ElevatedButton(
                         onPressed: () {
-                          final purchasedItems = List.of(cartProvider.cartItems);
-                          cartProvider.clearCart();
+                          final purchasedItems = cartProvider.cartItems.values
+                              .map((cartItem) => cartItem.product)
+                              .toList();
+
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => CheckoutScreen(purchasedItems: purchasedItems),
+                              builder: (context) => CheckoutScreen(
+                                purchasedItems: purchasedItems,
+                              ),
                             ),
                           );
                         },
