@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/product_provider.dart';
+import '../providers/cart_provider.dart';
 import '../widgets/product_card.dart';
+import 'cart_screen.dart';
 import 'product_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+  const HomeScreen({Key? key}) : super(key: key);
 
   @override
   State<HomeScreen> createState() => _HomeScreenState();
@@ -21,12 +23,10 @@ class _HomeScreenState extends State<HomeScreen> {
     _scrollController = ScrollController();
     _scrollController.addListener(_onScroll);
 
-    // Initially fetch products
     Future.microtask(() {
       Provider.of<ProductProvider>(context, listen: false).fetchProducts();
     });
 
-    // Search functionality
     _searchController.addListener(() {
       final query = _searchController.text;
       Provider.of<ProductProvider>(context, listen: false).searchProducts(query);
@@ -52,14 +52,36 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     final productProvider = Provider.of<ProductProvider>(context);
+    final cartProvider = Provider.of<CartProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home Page'),
         actions: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Icon(Icons.search),
+          IconButton(
+            icon: Stack(
+              children: [
+                const Icon(Icons.shopping_cart),
+                if (cartProvider.cartItems.isNotEmpty)
+                  Positioned(
+                    right: 0,
+                    child: CircleAvatar(
+                      radius: 8,
+                      backgroundColor: Colors.red,
+                      child: Text(
+                        cartProvider.cartItems.length.toString(),
+                        style: const TextStyle(fontSize: 10, color: Colors.white),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const CartScreen()),
+              );
+            },
           ),
         ],
       ),
@@ -94,7 +116,6 @@ class _HomeScreenState extends State<HomeScreen> {
                       final product = productProvider.products[index];
                       return GestureDetector(
                         onTap: () {
-                          // Navigate to Product Detail Page
                           Navigator.push(
                             context,
                             MaterialPageRoute(

@@ -1,13 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../models/product.dart';
+import '../providers/cart_provider.dart';
 
 class ProductCard extends StatelessWidget {
   final Product product;
 
-  const ProductCard({super.key, required this.product});
+  const ProductCard({Key? key, required this.product}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
+    final cartProvider = Provider.of<CartProvider>(context, listen: false);
+
     return Card(
       margin: const EdgeInsets.symmetric(vertical: 10, horizontal: 15),
       child: ListTile(
@@ -22,9 +26,13 @@ class ProductCard extends StatelessWidget {
         subtitle: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('\$${product.price}', style: TextStyle(fontWeight: FontWeight.bold)),
-            Text('Rating: ${product.rating.toString()}'), // Directly use the rating
+            Text('\$${product.price}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            Text('Rating: ${product.rating.toString()}'),
           ],
+        ),
+        trailing: ElevatedButton(
+          onPressed: () => cartProvider.addToCart(product),
+          child: const Text('Add to Cart'),
         ),
       ),
     );

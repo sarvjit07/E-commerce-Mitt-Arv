@@ -13,8 +13,14 @@ class CartProvider with ChangeNotifier {
     _cartItems.add(product);
     notifyListeners();
   }
+
   void removeFromCart(int id) {
     _cartItems.removeWhere((item) => item.id == id);
+    notifyListeners();
+  }
+
+  void clearCart() {
+    _cartItems.clear();
     notifyListeners();
   }
 }
