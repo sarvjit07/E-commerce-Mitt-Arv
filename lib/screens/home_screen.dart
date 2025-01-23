@@ -19,8 +19,9 @@ class _HomeScreenState extends State<HomeScreen> {
   String _selectedSortOption = 'Price';
   String? _selectedCategory;
   double _minPrice = 0.0;
-  double _maxPrice = double.infinity;
+  double _maxPrice = 1000.0; // Update max price to 1000
   double _minRating = 0.0;
+  double _maxRating = 5.0;
 
   @override
   void initState() {
@@ -55,6 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
       minPrice: _minPrice,
       maxPrice: _maxPrice,
       minRating: _minRating,
+      maxRating: _maxRating,
       sortOption: _selectedSortOption,
     );
   }
@@ -155,28 +157,76 @@ class _HomeScreenState extends State<HomeScreen> {
               ],
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: RangeSlider(
+              values: RangeValues(
+                _minPrice.clamp(0.0, 1000.0), // Set the max value to 1000
+                _maxPrice.clamp(0.0, 1000.0), // Set the max value to 1000
+              ),
+              min: 0.0,
+              max: 1000.0, // Set max value for price range to 1000
+              divisions: 10,
+              labels: RangeLabels(
+                _minPrice.toStringAsFixed(2),
+                _maxPrice.toStringAsFixed(2),
+              ),
+              onChanged: (values) {
+                setState(() {
+                  _minPrice = values.start.clamp(0.0, 1000.0);
+                  _maxPrice = values.end.clamp(0.0, 1000.0);
+                });
+                _applyFilters();
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: RangeSlider(
+              values: RangeValues(
+                _minRating.clamp(0.0, 5.0),
+                _maxRating.clamp(0.0, 5.0),
+              ),
+              min: 0.0,
+              max: 5.0,
+              divisions: 5,
+              labels: RangeLabels(
+                _minRating.toStringAsFixed(1),
+                _maxRating.toStringAsFixed(1),
+              ),
+              onChanged: (values) {
+                setState(() {
+                  _minRating = values.start.clamp(0.0, 5.0);
+                  _maxRating = values.end.clamp(0.0, 5.0);
+                });
+                _applyFilters();
+              },
+            ),
+          ),
           Expanded(
             child: productProvider.isLoading
                 ? const Center(child: CircularProgressIndicator())
-                : ListView.builder(
-                    controller: _scrollController,
-                    itemCount: productProvider.products.length,
-                    itemBuilder: (context, index) {
-                      final product = productProvider.products[index];
-                      return GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  ProductDetailScreen(product: product),
-                            ),
+                : productProvider.products.isEmpty
+                    ? const Center(child: Text('No products found for the selected filters.'))
+                    : ListView.builder(
+                        controller: _scrollController,
+                        itemCount: productProvider.products.length,
+                        itemBuilder: (context, index) {
+                          final product = productProvider.products[index];
+                          return GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      ProductDetailScreen(product: product),
+                                ),
+                              );
+                            },
+                            child: ProductCard(product: product),
                           );
                         },
-                        child: ProductCard(product: product),
-                      );
-                    },
-                  ),
+                      ),
           ),
         ],
       ),

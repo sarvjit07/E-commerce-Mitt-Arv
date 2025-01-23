@@ -3,6 +3,8 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/product.dart';
 
+// In product_provider.dart
+
 class ProductProvider with ChangeNotifier {
   List<Product> _products = []; // All products
   List<Product> _filteredProducts = []; // Filtered or searched products
@@ -85,12 +87,13 @@ class ProductProvider with ChangeNotifier {
     double minPrice = 0.0,
     double maxPrice = double.infinity,
     double minRating = 0.0,
+    double maxRating = 5.0, // Add maxRating here
     String sortOption = 'Price',
   }) {
     _filteredProducts = _products.where((product) {
       final matchesCategory = category == null || product.category == category;
       final matchesPrice = product.price >= minPrice && product.price <= maxPrice;
-      final matchesRating = product.rating >= minRating;
+      final matchesRating = product.rating >= minRating && product.rating <= maxRating; // Add condition for rating range
       return matchesCategory && matchesPrice && matchesRating;
     }).toList();
 
@@ -110,3 +113,4 @@ class ProductProvider with ChangeNotifier {
     notifyListeners();
   }
 }
+
