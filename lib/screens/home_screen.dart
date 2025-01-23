@@ -15,9 +15,6 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   late ScrollController _scrollController;
-  final TextEditingController _searchController = TextEditingController();
-  String _selectedSortOption = 'Price';
-  String? _selectedCategory;
 
   @override
   void initState() {
@@ -28,33 +25,21 @@ class _HomeScreenState extends State<HomeScreen> {
     Future.microtask(() {
       Provider.of<ProductProvider>(context, listen: false).fetchProducts();
     });
-
-    _searchController.addListener(() {
-      final query = _searchController.text;
-      Provider.of<ProductProvider>(context, listen: false).searchProducts(query);
-    });
   }
 
+  // Scroll Listener to detect near-bottom
   void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 100) {
-      final provider = Provider.of<ProductProvider>(context, listen: false);
-      if (!provider.isFetchingMore) {
-        provider.fetchProducts(isLoadMore: true);
-      }
+    final productProvider = Provider.of<ProductProvider>(context, listen: false);
+    if (_scrollController.position.pixels >=
+            _scrollController.position.maxScrollExtent - 100 &&
+        !productProvider.isFetchingMore) {
+      productProvider.fetchProducts(isLoadMore: true);
     }
-  }
-
-  void _applyFilters() {
-    Provider.of<ProductProvider>(context, listen: false).applyFilters(
-      category: _selectedCategory,
-      sortOption: _selectedSortOption,
-    );
   }
 
   @override
   void dispose() {
     _scrollController.dispose();
-    _searchController.dispose();
     super.dispose();
   }
 
@@ -96,77 +81,34 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Column(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: 'Search for products...',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.search),
-              ),
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-              children: [
-                DropdownButton<String>(
-                  value: _selectedSortOption,
-                  items: ['Price', 'Popularity', 'Rating']
-                      .map((option) => DropdownMenuItem(
-                            value: option,
-                            child: Text(option),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedSortOption = value!;
-                    });
-                    _applyFilters();
-                  },
-                ),
-                const SizedBox(width: 16),
-                DropdownButton<String?>(
-                  value: _selectedCategory,
-                  items: ['Electronics', 'Fashion', 'Home', 'All']
-                      .map((option) => DropdownMenuItem(
-                            value: option == 'All' ? null : option,
-                            child: Text(option),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedCategory = value;
-                    });
-                    _applyFilters();
-                  },
-                ),
-              ],
-            ),
-          ),
-Expanded(
-  child: productProvider.isLoading
-      ? const Center(child: CircularProgressIndicator())
-      : ListView.builder(
-          controller: _scrollController,
-          itemCount: productProvider.products.length,
-          itemBuilder: (context, index) {
-            final product = productProvider.products[index];
-            return GestureDetector(
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => ProductDetailScreen(product: product),
+          Expanded(
+            child: productProvider.isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : ListView.builder(
+                    controller: _scrollController,
+                    itemCount: productProvider.products.length + 1, // +1 for loading indicator
+                    itemBuilder: (context, index) {
+                      if (index < productProvider.products.length) {
+                        final product = productProvider.products[index];
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                    ProductDetailScreen(product: product),
+                              ),
+                            );
+                          },
+                          child: ProductCard(product: product),
+                        );
+                      } else if (productProvider.isFetchingMore) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
+                      return const SizedBox.shrink();
+                    },
                   ),
-                );
-              },
-              child: ProductCard(product: product),
-            );
-          },
-        ),
-),
+          ),
         ],
       ),
     );
