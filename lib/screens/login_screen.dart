@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
+  const LoginScreen({Key? key}) : super(key: key);
+
   @override
   State<LoginScreen> createState() => _LoginScreenState();
 }
@@ -10,69 +10,102 @@ class LoginScreen extends StatefulWidget {
 class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
-  String _errorMessage = "";
 
-  // Hardcoded credentials
-  final String _validEmail = "user@example.com";
-  final String _validPassword = "password123";
-
-  // Login functionality
   void _login() {
-    if (_emailController.text.trim() == _validEmail &&
-        _passwordController.text.trim() == _validPassword) {
-      // Navigate to HomeScreen on successful login
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => HomeScreen()),
-      );
-    } else {
-      setState(() {
-        _errorMessage = "Invalid email or password.";
-      });
-    }
-  }
+    // Example credentials
+    const correctEmail = 'user@example.com';
+    const correctPassword = 'password123';
 
-  // Navigate to Register Screen
-  void _navigateToRegister() {
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => RegisterScreen()),
-    );
+    if (_emailController.text == correctEmail &&
+        _passwordController.text == correctPassword) {
+      Navigator.pushReplacementNamed(context, '/home');
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Invalid email or password'),
+        ),
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Login")),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            TextField(
-              controller: _emailController,
-              decoration: const InputDecoration(labelText: "Email"),
+      backgroundColor: Colors.blueAccent.shade100,
+      body: Center(
+        child: SingleChildScrollView(
+          child: Card(
+            margin: const EdgeInsets.symmetric(horizontal: 30),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
             ),
-            TextField(
-              controller: _passwordController,
-              obscureText: true,
-              decoration: const InputDecoration(labelText: "Password"),
-            ),
-            if (_errorMessage.isNotEmpty)
-              Text(
-                _errorMessage,
-                style: const TextStyle(color: Colors.red),
+            elevation: 8,
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Text(
+                    'Login',
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  TextField(
+                    controller: _emailController,
+                    keyboardType: TextInputType.emailAddress,
+                    decoration: InputDecoration(
+                      labelText: 'Email',
+                      prefixIcon: const Icon(Icons.email),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 15),
+                  TextField(
+                    controller: _passwordController,
+                    obscureText: true,
+                    decoration: InputDecoration(
+                      labelText: 'Password',
+                      prefixIcon: const Icon(Icons.lock),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  ElevatedButton(
+                    onPressed: _login,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 50, vertical: 12),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                    ),
+                    child: const Text(
+                      'Login',
+                      style: TextStyle(fontSize: 16),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  TextButton(
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/register');
+                    },
+                    child: const Text(
+                      'New user? Register here',
+                      style: TextStyle(color: Colors.blue),
+                    ),
+                  ),
+                ],
               ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _login,
-              child: const Text("Login"),
             ),
-            TextButton(
-              onPressed: _navigateToRegister,
-              child: const Text("New user? Register here"),
-            ),
-          ],
+          ),
         ),
       ),
     );
