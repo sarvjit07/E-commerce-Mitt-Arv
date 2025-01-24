@@ -3,21 +3,19 @@ import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/product.dart';
 
-// In product_provider.dart
-
 class ProductProvider with ChangeNotifier {
-  List<Product> _products = []; // All products
-  List<Product> _filteredProducts = []; // Filtered or searched products
-  List<String> _categories = []; // Available categories from API
+  List<Product> _allProducts = []; // All products from API
+  List<Product> _filteredProducts = []; // Products after applying filters/search
+  List<String> _categories = []; // Categories from API
   bool _isLoading = false;
   bool _isFetchingMore = false;
   int _page = 1;
   final int _limit = 10;
 
-  List<Product> get products => _filteredProducts.isEmpty ? _products : _filteredProducts;
-  List<String> get categories => _categories;
-  bool get isLoading => _isLoading;
-  bool get isFetchingMore => _isFetchingMore;
+  List<Product> get products => _filteredProducts; // Products to show
+  List<String> get categories => _categories; // Available categories
+  bool get isLoading => _isLoading; // Loading status for main screen
+  bool get isFetchingMore => _isFetchingMore; // Loading status for pagination
 
   // Fetch products from API with pagination
   Future<void> fetchProducts({bool isLoadMore = false}) async {
@@ -31,16 +29,19 @@ class ProductProvider with ChangeNotifier {
     }
 
     try {
-      final url = Uri.parse('https://fakestoreapi.com/products?_page=$_page&_limit=$_limit');
+      final url = Uri.parse(
+          'https://fakestoreapi.com/products?_page=$_page&_limit=$_limit');
       final response = await http.get(url);
 
       if (response.statusCode == 200) {
         final List<dynamic> data = json.decode(response.body);
 
         if (isLoadMore) {
-          _products.addAll(data.map((item) => Product.fromJson(item)).toList());
+          _allProducts
+              .addAll(data.map((item) => Product.fromJson(item)).toList());
         } else {
-          _products = data.map((item) => Product.fromJson(item)).toList();
+          _allProducts = data.map((item) => Product.fromJson(item)).toList();
+          _filteredProducts = [..._allProducts]; // Reset filtered products
         }
         _page++;
       }
@@ -71,9 +72,9 @@ class ProductProvider with ChangeNotifier {
   // Search products by title
   void searchProducts(String query) {
     if (query.isEmpty) {
-      _filteredProducts = [];
+      _filteredProducts = [..._allProducts]; // Reset to all products
     } else {
-      _filteredProducts = _products
+      _filteredProducts = _allProducts
           .where((product) =>
               product.title.toLowerCase().contains(query.toLowerCase()))
           .toList();
@@ -87,17 +88,17 @@ class ProductProvider with ChangeNotifier {
     double minPrice = 0.0,
     double maxPrice = double.infinity,
     double minRating = 0.0,
-    double maxRating = 5.0, // Add maxRating here
     String sortOption = 'Price',
   }) {
-    _filteredProducts = _products.where((product) {
+    // Filter products
+    _filteredProducts = _allProducts.where((product) {
       final matchesCategory = category == null || product.category == category;
       final matchesPrice = product.price >= minPrice && product.price <= maxPrice;
-      final matchesRating = product.rating >= minRating && product.rating <= maxRating; // Add condition for rating range
+      final matchesRating = product.rating >= minRating;
       return matchesCategory && matchesPrice && matchesRating;
     }).toList();
 
-    // Sort products
+    // Sort filtered products
     switch (sortOption) {
       case 'Price':
         _filteredProducts.sort((a, b) => a.price.compareTo(b.price));
@@ -112,5 +113,10 @@ class ProductProvider with ChangeNotifier {
 
     notifyListeners();
   }
-}
 
+  // Reset all filters and show all products
+  void resetFilters() {
+    _filteredProducts = [..._allProducts];
+    notifyListeners();
+  }
+}

@@ -153,7 +153,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     'Categories:',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  DropdownButton<String?>(
+                  DropdownButton<String?>( 
                     value: _selectedCategory,
                     items: (['All'] + productProvider.categories)
                         .map((category) => DropdownMenuItem(
@@ -223,8 +223,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 ? const Center(child: CircularProgressIndicator())
                 : productProvider.products.isEmpty
                     ? const Center(
-                        child:
-                            Text('No products found for the selected filters.'))
+                        child: Text('No products found for the selected filters.'),
+                      )
                     : ListView.builder(
                         controller: _scrollController,
                         itemCount: productProvider.products.length,
