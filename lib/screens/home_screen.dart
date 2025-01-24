@@ -19,9 +19,8 @@ class _HomeScreenState extends State<HomeScreen> {
   String _selectedSortOption = 'Price';
   String? _selectedCategory;
   double _minPrice = 0.0;
-  double _maxPrice = 1000.0; // Update max price to 1000
-  double _minRating = 0.0;
-  double _maxRating = 5.0;
+  double _maxPrice = 1000.0;
+  double _minRating = 0.0; // Initial rating filter
 
   @override
   void initState() {
@@ -30,19 +29,22 @@ class _HomeScreenState extends State<HomeScreen> {
     _scrollController.addListener(_onScroll);
 
     Future.microtask(() {
-      final productProvider = Provider.of<ProductProvider>(context, listen: false);
+      final productProvider =
+          Provider.of<ProductProvider>(context, listen: false);
       productProvider.fetchProducts();
       productProvider.fetchCategories(); // Fetch available categories
     });
 
     _searchController.addListener(() {
       final query = _searchController.text;
-      Provider.of<ProductProvider>(context, listen: false).searchProducts(query);
+      Provider.of<ProductProvider>(context, listen: false)
+          .searchProducts(query);
     });
   }
 
   void _onScroll() {
-    final productProvider = Provider.of<ProductProvider>(context, listen: false);
+    final productProvider =
+        Provider.of<ProductProvider>(context, listen: false);
     if (_scrollController.position.pixels >=
             _scrollController.position.maxScrollExtent - 100 &&
         !productProvider.isFetchingMore) {
@@ -56,7 +58,6 @@ class _HomeScreenState extends State<HomeScreen> {
       minPrice: _minPrice,
       maxPrice: _maxPrice,
       minRating: _minRating,
-      maxRating: _maxRating,
       sortOption: _selectedSortOption,
     );
   }
@@ -89,7 +90,8 @@ class _HomeScreenState extends State<HomeScreen> {
                       backgroundColor: Colors.red,
                       child: Text(
                         cartProvider.cartItems.length.toString(),
-                        style: const TextStyle(fontSize: 10, color: Colors.white),
+                        style:
+                            const TextStyle(fontSize: 10, color: Colors.white),
                       ),
                     ),
                   ),
@@ -104,110 +106,125 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: Column(
+      body: Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: TextField(
-              controller: _searchController,
-              decoration: const InputDecoration(
-                hintText: 'Search for products...',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.search),
+          // Filters Drawer
+          SizedBox(
+            width: 250,
+            child: Drawer(
+              elevation: 1,
+              child: ListView(
+                padding: const EdgeInsets.all(8.0),
+                children: [
+                  TextField(
+                    controller: _searchController,
+                    decoration: const InputDecoration(
+                      hintText: 'Search for products...',
+                      border: OutlineInputBorder(),
+                      prefixIcon: Icon(Icons.search),
+                    ),
+                    onChanged: (query) {
+                      Provider.of<ProductProvider>(context, listen: false)
+                          .searchProducts(query);
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Sort By:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  DropdownButton<String>(
+                    value: _selectedSortOption,
+                    items: ['Price', 'Popularity', 'Rating']
+                        .map((option) => DropdownMenuItem(
+                              value: option,
+                              child: Text(option),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedSortOption = value!;
+                      });
+                      _applyFilters();
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Categories:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  DropdownButton<String?>(
+                    value: _selectedCategory,
+                    items: (['All'] + productProvider.categories)
+                        .map((category) => DropdownMenuItem(
+                              value: category == 'All' ? null : category,
+                              child: Text(category),
+                            ))
+                        .toList(),
+                    onChanged: (value) {
+                      setState(() {
+                        _selectedCategory = value;
+                      });
+                      _applyFilters();
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Price Range:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  RangeSlider(
+                    values: RangeValues(
+                      _minPrice.clamp(0.0, 900.0),
+                      _maxPrice.clamp(1.0, 1000.0),
+                    ),
+                    min: 0.0,
+                    max: 1000.0,
+                    divisions: 10,
+                    labels: RangeLabels(
+                      _minPrice.toStringAsFixed(2),
+                      _maxPrice.toStringAsFixed(2),
+                    ),
+                    onChanged: (values) {
+                      setState(() {
+                        if (values.start < values.end && values.start < 1000) {
+                          _minPrice = values.start.clamp(0.0, 900.0);
+                          _maxPrice = values.end.clamp(1.0, 1000.0);
+                        }
+                      });
+                      _applyFilters();
+                    },
+                  ),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Customer Ratings:',
+                    style: TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  ...[4.0, 3.0, 2.0, 1.0].map((rating) {
+                    return RadioListTile<double>(
+                      title: Text('${rating.toInt()}★ & above'),
+                      value: rating,
+                      groupValue: _minRating,
+                      onChanged: (value) {
+                        setState(() {
+                          _minRating = value!;
+                        });
+                        _applyFilters();
+                      },
+                    );
+                  }).toList(),
+                ],
               ),
             ),
           ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: Row(
-              children: [
-                // Sort Dropdown
-                DropdownButton<String>(
-                  value: _selectedSortOption,
-                  items: ['Price', 'Popularity', 'Rating']
-                      .map((option) => DropdownMenuItem(
-                            value: option,
-                            child: Text(option),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedSortOption = value!;
-                    });
-                    _applyFilters();
-                  },
-                ),
-                const SizedBox(width: 16),
-                // Category Dropdown
-                DropdownButton<String?>(
-                  value: _selectedCategory,
-                  items: (['All'] + productProvider.categories)
-                      .map((category) => DropdownMenuItem(
-                            value: category == 'All' ? null : category,
-                            child: Text(category),
-                          ))
-                      .toList(),
-                  onChanged: (value) {
-                    setState(() {
-                      _selectedCategory = value;
-                    });
-                    _applyFilters();
-                  },
-                ),
-              ],
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: RangeSlider(
-              values: RangeValues(
-                _minPrice.clamp(0.0, 1000.0), // Set the max value to 1000
-                _maxPrice.clamp(0.0, 1000.0), // Set the max value to 1000
-              ),
-              min: 0.0,
-              max: 1000.0, // Set max value for price range to 1000
-              divisions: 10,
-              labels: RangeLabels(
-                _minPrice.toStringAsFixed(2),
-                _maxPrice.toStringAsFixed(2),
-              ),
-              onChanged: (values) {
-                setState(() {
-                  _minPrice = values.start.clamp(0.0, 1000.0);
-                  _maxPrice = values.end.clamp(0.0, 1000.0);
-                });
-                _applyFilters();
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: RangeSlider(
-              values: RangeValues(
-                _minRating.clamp(0.0, 5.0),
-                _maxRating.clamp(0.0, 5.0),
-              ),
-              min: 0.0,
-              max: 5.0,
-              divisions: 5,
-              labels: RangeLabels(
-                _minRating.toStringAsFixed(1),
-                _maxRating.toStringAsFixed(1),
-              ),
-              onChanged: (values) {
-                setState(() {
-                  _minRating = values.start.clamp(0.0, 5.0);
-                  _maxRating = values.end.clamp(0.0, 5.0);
-                });
-                _applyFilters();
-              },
-            ),
-          ),
+          // Products Grid
           Expanded(
             child: productProvider.isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : productProvider.products.isEmpty
-                    ? const Center(child: Text('No products found for the selected filters.'))
+                    ? const Center(
+                        child:
+                            Text('No products found for the selected filters.'))
                     : ListView.builder(
                         controller: _scrollController,
                         itemCount: productProvider.products.length,
