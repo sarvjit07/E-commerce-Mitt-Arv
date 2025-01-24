@@ -1,22 +1,22 @@
 import 'package:flutter/material.dart';
 
 class AuthProvider with ChangeNotifier {
-  bool _isAuthenticated = false;
+  bool _isLoggedIn = false;
 
-  bool get isAuthenticated => _isAuthenticated;
+  bool get isLoggedIn => _isLoggedIn;
 
   void login(String email, String password) {
-    // Simulated authentication
-    if (email == 'test@test.com' && password == 'password') {
-      _isAuthenticated = true;
+    // Example logic for login (you can expand it)
+    if (email == "user@example.com" && password == "1234567") {
+      _isLoggedIn = true;
       notifyListeners();
     } else {
-      throw Exception('Invalid credentials');
+      throw Exception("Invalid credentials");
     }
   }
 
   void logout() {
-    _isAuthenticated = false;
+    _isLoggedIn = false;
     notifyListeners();
   }
 }

@@ -1,10 +1,12 @@
-import 'package:ecommerce_app/screens/product_detail_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/product_provider.dart';
 import '../providers/cart_provider.dart';
+import '../providers/auth_provider.dart';
 import '../widgets/product_card.dart';
 import 'cart_screen.dart';
+import 'login_screen.dart';
+import 'product_detail_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -20,7 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   String? _selectedCategory;
   double _minPrice = 0.0;
   double _maxPrice = 1000.0;
-  double _minRating = 0.0; // Initial rating filter
+  double _minRating = 0.0;
 
   @override
   void initState() {
@@ -32,7 +34,7 @@ class _HomeScreenState extends State<HomeScreen> {
       final productProvider =
           Provider.of<ProductProvider>(context, listen: false);
       productProvider.fetchProducts();
-      productProvider.fetchCategories(); // Fetch available categories
+      productProvider.fetchCategories();
     });
 
     _searchController.addListener(() {
@@ -73,11 +75,22 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     final productProvider = Provider.of<ProductProvider>(context);
     final cartProvider = Provider.of<CartProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('Home Page'),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            onPressed: () {
+              authProvider.logout(); // Call logout method
+              Navigator.pushReplacement(
+                context,
+                MaterialPageRoute(builder: (context) => LoginScreen()),
+              );
+            },
+          ),
           IconButton(
             icon: Stack(
               children: [
@@ -108,7 +121,6 @@ class _HomeScreenState extends State<HomeScreen> {
       ),
       body: Row(
         children: [
-          // Filters Drawer
           SizedBox(
             width: 250,
             child: Drawer(
@@ -153,7 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     'Categories:',
                     style: TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  DropdownButton<String?>( 
+                  DropdownButton<String?>(
                     value: _selectedCategory,
                     items: (['All'] + productProvider.categories)
                         .map((category) => DropdownMenuItem(
@@ -217,7 +229,6 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
           ),
-          // Products Grid
           Expanded(
             child: productProvider.isLoading
                 ? const Center(child: CircularProgressIndicator())

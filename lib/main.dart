@@ -4,6 +4,7 @@ import 'providers/auth_provider.dart';
 import 'providers/cart_provider.dart';
 import 'providers/product_provider.dart';
 import 'screens/home_screen.dart';
+import 'screens/login_screen.dart';
 
 void main() {
   runApp(const MyApp());
@@ -11,6 +12,7 @@ void main() {
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
+
   @override
   Widget build(BuildContext context) {
     return MultiProvider(
@@ -19,11 +21,17 @@ class MyApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => ProductProvider()),
         ChangeNotifierProvider(create: (_) => CartProvider()),
       ],
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        title: 'E-Commerce App',
-        theme: ThemeData(primarySwatch: Colors.blue),
-        home: const HomeScreen(),
+      child: Consumer<AuthProvider>(
+        builder: (context, authProvider, child) {
+          return MaterialApp(
+            debugShowCheckedModeBanner: false,
+            title: 'E-Commerce App',
+            theme: ThemeData(primarySwatch: Colors.blue),
+home: authProvider.isLoggedIn
+    ? const HomeScreen()
+    : LoginScreen(),
+          );
+        },
       ),
     );
   }
