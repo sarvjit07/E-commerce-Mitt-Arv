@@ -1,22 +1,41 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 
 class AuthProvider with ChangeNotifier {
-  bool _isLoggedIn = false;
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  User? _user;
 
-  bool get isLoggedIn => _isLoggedIn;
+  bool get isLoggedIn => _user != null;
 
-  void login(String email, String password) {
-    // Example logic for login (you can expand it)
-    if (email == "user@example.com" && password == "password123") {
-      _isLoggedIn = true;
+  Future<void> login(String email, String password) async {
+    try {
+      final userCredential = await _auth.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      _user = userCredential.user;
       notifyListeners();
-    } else {
-      throw Exception("Invalid credentials");
+    } catch (e) {
+      throw Exception('Login failed: ${e.toString()}');
     }
   }
 
-  void logout() {
-    _isLoggedIn = false;
+  Future<void> register(String email, String password) async {
+    try {
+      final userCredential = await _auth.createUserWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+      _user = userCredential.user;
+      notifyListeners();
+    } catch (e) {
+      throw Exception('Registration failed: ${e.toString()}');
+    }
+  }
+
+  Future<void> logout() async {
+    await _auth.signOut();
+    _user = null;
     notifyListeners();
   }
 }
