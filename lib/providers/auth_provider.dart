@@ -7,7 +7,7 @@ class AuthProvider with ChangeNotifier {
 
   void login(String email, String password) {
     // Example logic for login (you can expand it)
-    if (email == "user@example.com" && password == "1234567") {
+    if (email == "user@example.com" && password == "password123") {
       _isLoggedIn = true;
       notifyListeners();
     } else {
